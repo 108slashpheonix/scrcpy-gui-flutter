@@ -23,7 +23,6 @@ A modern, high-performance, and feature-rich graphical interface for **scrcpy**,
 ### 📁 File & App Management
 *   **Drag-and-Drop APKs**: Instant installation by dropping files onto the GUI.
 *   **General File Pushing**: Drag any file to instantly push it to the phone's `Download` folder.
-*   **One-Click Screenshots**: Capture the phone screen and save it directly to your PC's Pictures folder.
 
 ### 🎨 Personalization & UX
 *   **Theme Switcher**: Choose from professionally designed themes:
