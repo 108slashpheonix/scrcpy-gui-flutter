@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -111,7 +111,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		48627DE32F430D8D008A418A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		48627DE32F430D8D008A418A /* Exceptions for "ScrcpyCameraExtension" folder in "ScrcpyCameraExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -121,9 +121,40 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		48627D952F430C47008A418A /* ScrcpyCameraExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ScrcpyCameraExtension; sourceTree = "<group>"; };
-		48627DB42F430C6B008A418A /* ScrcpyCameraExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ScrcpyCameraExtension; sourceTree = "<group>"; };
-		48627DD92F430D8D008A418A /* ScrcpyCameraExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (48627DE32F430D8D008A418A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ScrcpyCameraExtension; sourceTree = "<group>"; };
+		48627D952F430C47008A418A /* ScrcpyCameraExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ScrcpyCameraExtension;
+			sourceTree = "<group>";
+		};
+		48627DB42F430C6B008A418A /* ScrcpyCameraExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ScrcpyCameraExtension;
+			sourceTree = "<group>";
+		};
+		48627DD92F430D8D008A418A /* ScrcpyCameraExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				48627DE32F430D8D008A418A /* Exceptions for "ScrcpyCameraExtension" folder in "ScrcpyCameraExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ScrcpyCameraExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -316,8 +347,6 @@
 				48627DD92F430D8D008A418A /* ScrcpyCameraExtension */,
 			);
 			name = ScrcpyCameraExtension;
-			packageProductDependencies = (
-			);
 			productName = ScrcpyCameraExtension;
 			productReference = 48627DD82F430D8D008A418A /* com.99slashpheonix.andy.ScrcpyCameraExtension.systemextension */;
 			productType = "com.apple.product-type.system-extension";
@@ -494,13 +523,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
