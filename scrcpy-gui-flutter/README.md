@@ -14,9 +14,9 @@ High-performance, low-latency screen mirroring with keyboard and mouse control.
 ![Camera Mirror](assets/camera_mirror.png)
 Professional-grade camera mirroring with granular control over FPS, rotation, and resolution.
 
-### Virtual Webcam (macOS Native)
+### Virtual Webcam (macOS Native) - *Coming Soon*
 ![Virtual Webcam](assets/virtual_cam.png)
-Turn your phone into a system-wide native webcam without needing third-party drivers or OBS.
+Turn your phone into a system-wide native webcam without needing third-party drivers (currently in development).
 
 ### File Explorer
 ![File Explorer](assets/file_explorer.png)

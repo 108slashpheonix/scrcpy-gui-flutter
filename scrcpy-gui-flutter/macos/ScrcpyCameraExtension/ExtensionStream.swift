@@ -136,7 +136,7 @@ class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
     }
     
     private func processFrame(_ data: Data) {
-        guard let stream = stream else { return }
+        guard stream != nil else { return }
         
         var pixelBuffer: CVPixelBuffer?
         let attrs = [kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
@@ -158,8 +158,8 @@ class ExtensionStreamSource: NSObject, CMIOExtensionStreamSource {
         
         CMSampleBufferCreateReadyWithImageBuffer(allocator: kCFAllocatorDefault, imageBuffer: buffer, formatDescription: formatDesc, sampleTiming: &timingInfo, sampleBufferOut: &sampleBuffer)
         
-//        if let sb = sampleBuffer {
-//            stream.sendSampleBuffer(sb)
-//        }
+        if let sb = sampleBuffer, let s = stream {
+            s.send(sb, discontinuity: [], hostTimeInNanoseconds: UInt64(timingInfo.presentationTimeStamp.seconds * 1_000_000_000))
+        }
     }
 }
