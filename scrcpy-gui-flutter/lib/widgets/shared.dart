@@ -23,16 +23,16 @@ class GlassCard extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      padding: padding ?? const EdgeInsets.all(16),
+      padding: padding ?? const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.glassBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
           BoxShadow(
             color: Colors.white.withValues(alpha: 0.02),
@@ -148,14 +148,14 @@ class StyledDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = context.watch<AppState>().theme;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: large ? 6 : 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: large ? 4 : 2),
       decoration: BoxDecoration(
         color: const Color(0xFF09090B).withValues(alpha: 0.5),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.05),
           width: 1,
         ),
-        borderRadius: BorderRadius.circular(large ? 12 : 8),
+        borderRadius: BorderRadius.circular(large ? 10 : 6),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -167,7 +167,7 @@ class StyledDropdown extends StatelessWidget {
           style: TextStyle(
             color: theme.textMain,
             fontWeight: large ? FontWeight.w600 : FontWeight.w500,
-            fontSize: large ? 15 : 13,
+            fontSize: large ? 14 : 12,
           ),
           icon: Icon(
             Icons.unfold_more_rounded,
@@ -255,7 +255,7 @@ class SectionLabel extends StatelessWidget {
     return Text(
       text.toUpperCase(),
       style: TextStyle(
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: FontWeight.w900,
         color: accent ? theme.accentPrimary : theme.textMuted,
         letterSpacing: 0.5,
