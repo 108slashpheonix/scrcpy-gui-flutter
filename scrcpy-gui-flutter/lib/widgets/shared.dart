@@ -54,6 +54,7 @@ class AccentButton extends StatefulWidget {
   final bool fullWidth;
   final double verticalPadding;
   final double fontSize;
+  final IconData? icon;
 
   const AccentButton({
     super.key,
@@ -63,6 +64,7 @@ class AccentButton extends StatefulWidget {
     this.fullWidth = false,
     this.verticalPadding = 12,
     this.fontSize = 12,
+    this.icon,
   });
 
   @override
@@ -114,14 +116,27 @@ class _AccentButtonState extends State<AccentButton> {
                   ],
           ),
           child: Center(
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: widget.fontSize,
-                letterSpacing: 1.5,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(
+                    widget.icon,
+                    color: Colors.white,
+                    size: widget.fontSize + 2,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: widget.fontSize,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
