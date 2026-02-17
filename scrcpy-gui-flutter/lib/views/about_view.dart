@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../providers/app_state.dart';
@@ -151,9 +152,17 @@ class AboutView extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              Text(
-                'v3.1.0 • Built with Flutter',
-                style: TextStyle(fontSize: 10, color: theme.textMuted),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  final version = snapshot.hasData
+                      ? 'v${snapshot.data!.version}'
+                      : '...';
+                  return Text(
+                    '$version • Built with Flutter',
+                    style: TextStyle(fontSize: 10, color: theme.textMuted),
+                  );
+                },
               ),
             ],
           ),

@@ -14,7 +14,7 @@ void main() async {
     center: true,
     backgroundColor: Color(0xFF0C0C0E),
     titleBarStyle: TitleBarStyle.hidden,
-    title: 'Scrcpy GUI',
+    title: 'Android Candy',
     minimumSize: Size(1000, 700),
   );
 
@@ -40,7 +40,7 @@ class ScrcpyGuiApp extends StatelessWidget {
     final theme = appState.theme;
 
     return MaterialApp(
-      title: 'Scrcpy GUI',
+      title: 'Android Candy',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,

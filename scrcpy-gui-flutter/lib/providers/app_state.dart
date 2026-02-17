@@ -62,12 +62,13 @@ class AppState extends ChangeNotifier {
   }
 
   set cameraRotation(String value) {
-    if (cameraFacing == 'front')
+    if (cameraFacing == 'front') {
       _cameraRotationFront = value;
-    else if (cameraFacing == 'external')
+    } else if (cameraFacing == 'external') {
       _cameraRotationExternal = value;
-    else
+    } else {
       _cameraRotationBack = value;
+    }
   }
 
   String cameraFacing = 'back';
@@ -75,8 +76,8 @@ class AppState extends ChangeNotifier {
   String codec = 'h264';
   String cameraAr = '0';
   bool cameraHighSpeed = false;
-  int vdWidth = 1920;
-  int vdHeight = 1080;
+  int vdWidth = 1080;
+  int vdHeight = 1920;
   int vdDpi = 420;
   bool stayAwake = true;
   bool turnOff = false;
@@ -341,6 +342,7 @@ class AppState extends ChangeNotifier {
       scrcpyService.activeSessions.contains(deviceId);
 
   Future<void> launchSession() async {
+    _stopAppMonitoring(); // Clear any app-specific monitoring
     if (_selectedDevice == null) {
       addLog('Select a device first!', LogType.error);
       return;
@@ -376,6 +378,127 @@ class AppState extends ChangeNotifier {
       'recordPath': recordPath,
       'rotation': _sessionMode == 'camera' ? cameraRotation : rotation,
     });
+  }
+
+  // App Monitoring
+  String? _monitoredDevice;
+  bool _isMonitoring = false;
+
+  Future<void> launchApp(String packageName, String appName) async {
+    if (_selectedDevice == null) {
+      addLog('Select a device first!', LogType.error);
+      return;
+    }
+
+    if (isSessionActive(_selectedDevice!)) {
+      addLog('Switching to $appName in active session...', LogType.info);
+      await adbService.launchApp(_selectedDevice!, packageName);
+      _startAppMonitoring(_selectedDevice!, packageName, appName);
+      return;
+    }
+
+    // 1. Resolve Main Activity
+    final activity = await adbService.getMainActivity(
+      _selectedDevice!,
+      packageName,
+    );
+    if (activity == null) {
+      addLog(
+        'Could not resolve main activity (using default launch)',
+        LogType.warning,
+      );
+      // Fallback to old method if activity not found
+    }
+
+    // 2. Setup listener to catch Display ID
+    final deviceId = _selectedDevice!;
+    final originalOnLog = scrcpyService.onLog;
+
+    scrcpyService.onLog = (msg) {
+      // Forward to original logger
+      originalOnLog?.call(msg);
+
+      // Parse for Display ID
+      // [server] INFO: New display: 1920x1080/420 (id=18)
+      if (msg.contains('New display') && msg.contains('(id=')) {
+        final match = RegExp(r'\(id=(\d+)\)').firstMatch(msg);
+        if (match != null) {
+          final displayId = int.tryParse(match.group(1)!);
+          if (displayId != null) {
+            addLog(
+              'Display created: ID $displayId. Launching $appName...',
+              LogType.success,
+            );
+
+            // Wait a moment for display to be ready for window manager
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (activity != null) {
+                addLog(
+                  'DEBUG: Launching activity $activity in FULLSCREEN',
+                  LogType.info,
+                );
+                // Force Fullscreen (1) and Clear Task to reset window state
+                adbService.shell(
+                  deviceId,
+                  'am start -n $activity --display $displayId --windowingMode 1 --activity-clear-task --activity-clear-top',
+                );
+
+                // RETRY after 1.5s to ensure it persists against system overrides
+                Future.delayed(const Duration(milliseconds: 1500), () {
+                  adbService.shell(
+                    deviceId,
+                    'am start -n $activity --display $displayId --windowingMode 1 --activity-clear-top',
+                  );
+                });
+              } else {
+                addLog(
+                  'DEBUG: Fallback launch (monkey) for $packageName',
+                  LogType.warning,
+                );
+                // Fallback launch (might not be full screen)
+                adbService.shell(
+                  deviceId,
+                  'monkey -p $packageName -c android.intent.category.LAUNCHER --display $displayId 1',
+                );
+              }
+            });
+          }
+        }
+      }
+    };
+
+    await scrcpyService.runScrcpy({
+      'device': _selectedDevice,
+      'sessionMode': 'mirror',
+      'newDisplay': true,
+      // 'startApp': packageName, // Disabled to allow manual flag injection
+      'windowTitle': appName,
+      'otgEnabled': otgEnabled,
+      'otgPure': otgPure,
+      'res': resolution,
+      'bitrate': bitrate,
+      'fps': fps,
+      'stayAwake': stayAwake,
+      'turnOff': turnOff,
+      'audioEnabled': audioEnabled,
+      'alwaysOnTop': alwaysOnTop,
+      'fullscreen': fullscreen,
+      'borderless': borderless,
+      'record': recordScreen,
+      'recordPath': recordPath,
+      'rotation': rotation,
+      // Virtual Display Params - Hardcoded for App Launch
+      'vdWidth': 1080,
+      'vdHeight': 2340,
+      'vdDpi': 440,
+    });
+
+    _startAppMonitoring(_selectedDevice!, packageName, appName);
+  }
+
+  void _stopAppMonitoring() {
+    _isMonitoring = false;
+    _monitoredDevice = null;
   }
 
   // Wireless
@@ -585,6 +708,67 @@ class AppState extends ChangeNotifier {
       _nicknames.entries.map((e) => '${e.key}=${e.value}').join('|'),
     );
     await prefs.setString('recentIps', _recentIps.join('|'));
+  }
+
+  void _startAppMonitoring(
+    String deviceId,
+    String packageName,
+    String appName,
+  ) async {
+    // Cancel existing monitor if any
+    _stopAppMonitoring();
+
+    _monitoredDevice = deviceId;
+    _isMonitoring = true;
+    addLog('Monitoring $appName... (Waiting for launch)', LogType.info);
+
+    int attempts = 0;
+    // 20 checks * 500ms = 10 seconds grace period
+    const int gracePeriodAttempts = 20;
+    int consecutiveFailures = 0;
+    const int requiredFailuresToClose = 3;
+
+    // Check every 500ms for better responsiveness
+    while (_isMonitoring && _monitoredDevice == deviceId) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!_isMonitoring) break;
+
+      // If session ended manually, stop monitoring
+      if (!isSessionActive(deviceId)) {
+        addLog('Session for $appName ended.', LogType.info);
+        _stopAppMonitoring();
+        break;
+      }
+
+      attempts++;
+      // Use isAppRunning (pidof) which is more robust than dumpsys on Android 16
+      final isRunning = await adbService.isAppRunning(deviceId, packageName);
+
+      if (isRunning) {
+        // App is running! Reset
+        consecutiveFailures = 0;
+        continue;
+      }
+
+      // App is NOT running
+      if (attempts <= gracePeriodAttempts) {
+        continue;
+      }
+
+      consecutiveFailures++;
+      if (consecutiveFailures < requiredFailuresToClose) {
+        continue;
+      }
+
+      // Outside grace period - strictly close
+      addLog(
+        '$appName is no longer active (process died). Closing session.',
+        LogType.info,
+      );
+      scrcpyService.stopScrcpy(deviceId);
+      _stopAppMonitoring();
+      break;
+    }
   }
 
   void saveSettings() {

@@ -15,6 +15,19 @@ class AdbService {
       final fullPath = '$_customPath${Platform.pathSeparator}adb$ext';
       if (File(fullPath).existsSync()) return fullPath;
     }
+
+    // Check common paths on macOS/Linux if not in PATH
+    if (Platform.isMacOS || Platform.isLinux) {
+      const commonPaths = [
+        '/opt/homebrew/bin/adb',
+        '/usr/local/bin/adb',
+        '/usr/bin/adb',
+      ];
+      for (final path in commonPaths) {
+        if (File(path).existsSync()) return path;
+      }
+    }
+
     return 'adb';
   }
 
@@ -478,6 +491,93 @@ end tell
       }
     }
     return result;
+  }
+
+  Future<String?> getMainActivity(String deviceId, String packageName) async {
+    try {
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'cmd',
+        'package',
+        'resolve-activity',
+        '--brief',
+        packageName,
+      ]);
+      final output = result.stdout.toString().trim();
+      // Output format:
+      // ai.perplexity.app.android
+      //   ai.perplexity.app.android/.MainActivity
+
+      final lines = output.split('\n');
+      if (lines.length >= 2) {
+        return lines[1].trim();
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<bool> isAppRunning(String deviceId, String packageName) async {
+    try {
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'pidof',
+        packageName,
+      ]);
+      return result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isAppResumed(String deviceId, String packageName) async {
+    try {
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'dumpsys',
+        'activity',
+        'activities',
+      ]);
+      final output = result.stdout.toString();
+      // Look for "mResumedActivity: ActivityRecord{... com.package/...}"
+      // We just check if the line contains mResumedActivity AND the package name
+      final lines = output.split('\n');
+      for (final line in lines) {
+        if (line.contains('mResumedActivity') && line.contains(packageName)) {
+          return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> launchApp(String deviceId, String packageName) async {
+    try {
+      // Use monkey to launch the main activity of the package
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'monkey',
+        '-p',
+        packageName,
+        '-c',
+        'android.intent.category.LAUNCHER',
+        '1',
+      ]);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<bool> uninstallApp(String deviceId, String packageName) async {
