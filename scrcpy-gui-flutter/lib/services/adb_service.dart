@@ -15,6 +15,19 @@ class AdbService {
       final fullPath = '$_customPath${Platform.pathSeparator}adb$ext';
       if (File(fullPath).existsSync()) return fullPath;
     }
+
+    // Check common paths on macOS/Linux if not in PATH
+    if (Platform.isMacOS || Platform.isLinux) {
+      const commonPaths = [
+        '/opt/homebrew/bin/adb',
+        '/usr/local/bin/adb',
+        '/usr/bin/adb',
+      ];
+      for (final path in commonPaths) {
+        if (File(path).existsSync()) return path;
+      }
+    }
+
     return 'adb';
   }
 

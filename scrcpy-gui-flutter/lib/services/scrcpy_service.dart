@@ -130,16 +130,18 @@ class ScrcpyService {
       final fullPath = '$_customPath${Platform.pathSeparator}scrcpy$ext';
       if (File(fullPath).existsSync()) return fullPath;
     }
-    return 'scrcpy';
-  }
 
-  String _getAdbPath() {
-    if (_customPath != null && _customPath!.isNotEmpty) {
-      final ext = Platform.isWindows ? '.exe' : '';
-      final fullPath = '$_customPath${Platform.pathSeparator}adb$ext';
-      if (File(fullPath).existsSync()) return fullPath;
+    if (Platform.isMacOS || Platform.isLinux) {
+      const commonPaths = [
+        '/opt/homebrew/bin/scrcpy',
+        '/usr/local/bin/scrcpy',
+        '/usr/bin/scrcpy',
+      ];
+      for (final path in commonPaths) {
+        if (File(path).existsSync()) return path;
+      }
     }
-    return 'adb';
+    return 'scrcpy';
   }
 
   Future<Map<String, dynamic>> checkScrcpy() async {

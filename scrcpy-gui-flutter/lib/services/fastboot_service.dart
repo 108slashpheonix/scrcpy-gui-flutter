@@ -22,6 +22,19 @@ class FastbootService {
         if (File(fullPath).existsSync()) return fullPath;
       }
     }
+
+    // Check common paths on macOS/Linux if not in PATH
+    if (Platform.isMacOS || Platform.isLinux) {
+      const commonPaths = [
+        '/opt/homebrew/bin/fastboot',
+        '/usr/local/bin/fastboot',
+        '/usr/bin/fastboot',
+      ];
+      for (final path in commonPaths) {
+        if (File(path).existsSync()) return path;
+      }
+    }
+
     return 'fastboot';
   }
 

@@ -7,14 +7,15 @@ class AppDelegate: FlutterAppDelegate, OSSystemExtensionRequestDelegate {
     
     override func applicationDidFinishLaunching(_ notification: Notification) {
         // Request System Extension Activation
-        // Replace "com.imAdityaSharma.scrcpy-gui.ScrcpyCameraExtension" with your actual Bundle ID from Xcode if different
-        // It is usually $(PRODUCT_BUNDLE_IDENTIFIER) of the extension target.
-        let extensionIdentifier = "com.imAdityaSharma.scrcpy-gui.ScrcpyCameraExtension"
+        // Disabled for Free Tier / App Store builds unless properly signed
+        /*
+        let extensionIdentifier = "com.99slashpheonix.andy"
         
         // Create an activation request
         let request = OSSystemExtensionRequest.activationRequest(forExtensionWithIdentifier: extensionIdentifier, queue: .main)
         request.delegate = self
         OSSystemExtensionManager.shared.submitRequest(request)
+        */
         
         super.applicationDidFinishLaunching(notification)
     }
