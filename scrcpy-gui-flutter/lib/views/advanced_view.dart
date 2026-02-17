@@ -8,58 +8,31 @@ class AdvancedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appState = context.watch<AppState>();
-    final theme = appState.theme;
+    final theme = context.watch<AppState>().theme;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Advanced Options',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          if (appState.selectedDevice != null) ...[
-            GlassCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SectionLabel('ADB Shell'),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => appState.adbService.openShell(
-                        appState.selectedDevice!,
-                      ),
-                      icon: const Icon(Icons.terminal),
-                      label: const Text('OPEN SHELL'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ],
+    return Center(
+      child: GlassCard(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.info_outline_rounded, size: 48, color: theme.textMuted),
+            const SizedBox(height: 16),
+            Text(
+              "Advanced Options Moved",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-          ] else ...[
-            GlassCard(
-              child: Text(
-                "Please select a device in Dashboard first.",
-                style: TextStyle(color: theme.textMuted),
-              ),
+            const SizedBox(height: 8),
+            Text(
+              "Please check the sidebar 'Advanced' dropdown\nfor Shell, Fastboot, and Logs.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.textMuted),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

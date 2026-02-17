@@ -158,9 +158,8 @@ class WebcamView extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: AccentButton(
-              onPressed:
-                  null, // Disabled for now (requires signed native extension)
-              label: 'Native System Camera (Coming Soon)',
+              onPressed: () => appState.launchNativeWebcam(),
+              label: 'Start Native System Camera',
               icon: Icons.camera_enhance_rounded,
             ),
           ),

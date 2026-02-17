@@ -36,12 +36,12 @@ class AboutView extends StatelessWidget {
                       radius: 40,
                       backgroundColor: Colors.transparent,
                       backgroundImage: NetworkImage(
-                        'https://github.com/imAdityaSharma.png',
+                        'https://github.com/108slashpheonix.png',
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Aditya Sharma',
+                      '108slashpheonix',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -61,7 +61,7 @@ class AboutView extends StatelessWidget {
                         _SocialLink(
                           icon: Icons.code,
                           label: 'GitHub',
-                          url: 'https://github.com/imAdityaSharma',
+                          url: 'https://github.com/108slashpheonix',
                         ),
                         const SizedBox(width: 20),
                         // _SocialLink(

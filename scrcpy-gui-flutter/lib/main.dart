@@ -15,8 +15,9 @@ void main() async {
     backgroundColor: Color(0xFF0C0C0E),
     titleBarStyle: TitleBarStyle.hidden,
     title: 'Scrcpy GUI',
+    minimumSize: Size(1000, 700),
   );
-  
+
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();

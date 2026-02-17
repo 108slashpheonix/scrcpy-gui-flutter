@@ -1,14 +1,17 @@
 import 'dart:io';
-import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/adb_service.dart';
 import '../services/scrcpy_service.dart';
+import '../services/virtual_camera_service.dart';
+import '../services/fastboot_service.dart';
 import '../theme/app_themes.dart';
 
 class AppState extends ChangeNotifier {
   final AdbService adbService = AdbService();
   final ScrcpyService scrcpyService = ScrcpyService();
+  final FastbootService fastbootService = FastbootService();
 
   // Theme
   AppTheme _theme = AppThemes.ultraviolet;
@@ -157,88 +160,53 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  final VirtualCameraService virtualCameraService = VirtualCameraService();
+
   Future<void> launchNativeWebcam() async {
     if (_selectedDevice == null) return;
 
-    addLog('Starting Native Virtual Camera Relay...', LogType.info);
+    // 1. Launch Scrcpy with specific title (same as OBS relay but for native capture)
+    // We reuse the OBS relay launch logic to get the window up
+    // But we might want to ensure properties are set for best quality
 
-    // Command flow: scrcpy (raw h264) -> ffmpeg (decode to bgra) -> TCP Extension
-    // We use a shell script or multiple Process starts to handle the pipe
+    final windowTitle = 'Android Native Camera';
 
-    final scrcpyPath = scrcpyService.customPath != null
-        ? '${scrcpyService.customPath}${Platform.pathSeparator}scrcpy'
-        : 'scrcpy';
+    await scrcpyService.runScrcpy({
+      'device': _selectedDevice,
+      'sessionMode': 'camera',
+      'res': resolution == '0' ? '1920' : resolution,
+      'cameraFps': cameraFps,
+      'cameraFacing': cameraFacing,
+      'alwaysOnTop': true,
+      'borderless': true,
+      'audioEnabled': false,
+      'bitrate': bitrate,
+      'rotation': cameraRotation,
+      'windowTitle': windowTitle,
+    });
 
-    final scrcpyArgs = [
-      '-s',
-      _selectedDevice!,
-      '--video-source=camera',
-      '--no-window',
-      '--no-audio',
-      '--camera-facing=$cameraFacing',
-      '--camera-size=${resolution == "0"
-          ? "1920x1080"
-          : resolution == "3840"
-          ? "3840x2160"
-          : resolution == "1920"
-          ? "1920x1080"
-          : "1280x720"}',
-      '--camera-fps=$cameraFps',
-      '--record=pipe:.h264',
-    ];
+    addLog('Starting Native Virtual Camera...', LogType.info);
 
-    final ffmpegArgs = [
-      '-i',
-      'pipe:0',
-      '-f',
-      'rawvideo',
-      '-pix_fmt',
-      'bgra',
-      'tcp://localhost:5001',
-    ];
+    // Give scrcpy a moment to appear
+    await Future.delayed(const Duration(seconds: 2));
 
     try {
-      // 0. Check if Extension is listening (i.e. if a camera app is open)
-      try {
-        final socket = await Socket.connect(
-          'localhost',
-          5001,
-          timeout: const Duration(milliseconds: 500),
-        );
-        socket.destroy();
-      } catch (e) {
-        addLog(
-          'Error: Camera Extension not active. Please open a camera app (Zoom, QuickTime) and select "Scrcpy Camera" first.',
-          LogType.error,
-        );
-        return;
-      }
-
-      final scrcpyProcess = await Process.start(scrcpyPath, scrcpyArgs);
-      final ffmpegProcess = await Process.start('ffmpeg', ffmpegArgs);
-
-      // Pipe scrcpy stdout to ffmpeg stdin
-      scrcpyProcess.stdout.pipe(ffmpegProcess.stdin);
-
-      // Capture stderr
-      scrcpyProcess.stderr
-          .transform(utf8.decoder)
-          .listen((data) => addLog('Scrcpy: $data', LogType.info));
-      ffmpegProcess.stderr
-          .transform(utf8.decoder)
-          .listen((data) => addLog('FFmpeg: $data', LogType.info));
-
+      await virtualCameraService.start(windowTitle);
       addLog(
-        'Native Relay Active. Feed is being sent to CoreMedia extension.',
+        'Native Virtual Camera Active! Select "Scrcpy Camera" in your apps.',
         LogType.success,
       );
-
-      scrcpyProcess.exitCode.then((code) {
-        addLog('Scrcpy stream ended (Code $code)', LogType.info);
-        ffmpegProcess.kill();
-      });
     } catch (e) {
-      addLog('Error starting Native Relay: $e', LogType.error);
+      addLog('Error starting Native Camera: $e', LogType.error);
+    }
+  }
+
+  Future<void> stopNativeWebcam() async {
+    try {
+      await virtualCameraService.stop();
+      addLog('Native Virtual Camera Stopped', LogType.info);
+    } catch (e) {
+      addLog('Error stopping camera: $e', LogType.error);
     }
   }
 

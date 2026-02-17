@@ -12,6 +12,11 @@ import '../views/app_management_view.dart';
 import '../views/webcam_view.dart';
 import '../views/about_view.dart';
 
+import '../views/device_control_view.dart';
+import '../views/adb_shell_view.dart';
+import '../views/fastboot_view.dart';
+import '../views/adb_log_view.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -29,8 +34,12 @@ class _HomeScreenState extends State<HomeScreen> {
     MirroringView(),
     WebcamView(),
     FileManagerView(),
-    AdvancedView(),
+    AdvancedView(), // Index 5 - Kept for compatibility / safety
     AboutView(),
+    DeviceControlView(),
+    AdbShellView(), // Index 8
+    FastbootView(), // Index 9
+    AdbLogView(), // Index 10
   ];
 
   @override

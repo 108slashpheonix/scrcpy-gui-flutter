@@ -7,6 +7,8 @@ class AdbService {
   void setCustomPath(String? path) => _customPath = path;
   String? get customPath => _customPath;
 
+  String get adbPath => _getAdbPath();
+
   String _getAdbPath() {
     if (_customPath != null && _customPath!.isNotEmpty) {
       final ext = Platform.isWindows ? '.exe' : '';
@@ -603,6 +605,124 @@ end tell
       return (result.stdout as String).trim();
     } catch (_) {
       return '';
+    }
+  }
+
+  Future<bool> sendKeyEvent(String deviceId, int keycode) async {
+    try {
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'input',
+        'keyevent',
+        keycode.toString(),
+      ]);
+      return result.exitCode == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, String>> getMediaSessionInfo(String deviceId) async {
+    try {
+      final result = await Process.run(_getAdbPath(), [
+        '-s',
+        deviceId,
+        'shell',
+        'dumpsys',
+        'media_session',
+      ]);
+
+      if (result.exitCode != 0) return {};
+
+      final output = result.stdout as String;
+      final lines = output.split('\n');
+
+      Map<String, String>? candidateMetadata;
+      bool currentBlockIsPlaying = false;
+
+      // regex for legacy/verbose format
+      final legacyTitleRegex = RegExp(r'title=([^,]+)');
+      final legacyArtistRegex = RegExp(r'artist=([^,]+)');
+      final legacyAlbumRegex = RegExp(r'album=([^,]+)');
+
+      for (var line in lines) {
+        line = line.trim();
+
+        // 1. Check Playback State
+        // state=PlaybackState {state=PLAYING(3), ...} or state=3
+        if (line.startsWith('state=PlaybackState') ||
+            line.startsWith('state=')) {
+          if (line.contains('state=3') || line.contains('state=PLAYING')) {
+            currentBlockIsPlaying = true;
+          } else {
+            currentBlockIsPlaying = false;
+          }
+        }
+
+        // 2. Check Metadata
+        if (line.startsWith('metadata:')) {
+          String title = 'Unknown Title';
+          String artist = 'Unknown Artist';
+          String album = 'Unknown Album';
+          bool foundInfo = false;
+
+          // Format A: description=Title, Artist, Album
+          if (line.contains('description=')) {
+            final desc = line.split('description=');
+            if (desc.length > 1) {
+              final parts = desc[1].split(', ');
+              if (parts.isNotEmpty) {
+                title = parts[0];
+                foundInfo = true;
+              }
+              if (parts.length > 1) artist = parts[1];
+              if (parts.length > 2) album = parts[2];
+            }
+          }
+
+          // Format B: verbose key-value pairs in the same line or block (naive check on line)
+          // If description didn't yield results, or mixed format
+          if (!foundInfo) {
+            final tMatch = legacyTitleRegex.firstMatch(line);
+            if (tMatch != null) {
+              title = tMatch.group(1)?.trim() ?? title;
+              foundInfo = true;
+            }
+            final aMatch = legacyArtistRegex.firstMatch(line);
+            if (aMatch != null) artist = aMatch.group(1)?.trim() ?? artist;
+            final alMatch = legacyAlbumRegex.firstMatch(line);
+            if (alMatch != null) album = alMatch.group(1)?.trim() ?? album;
+          }
+
+          if (foundInfo) {
+            final meta = {
+              'title': title,
+              'artist': artist,
+              'album': album,
+              'isPlaying': currentBlockIsPlaying.toString(),
+            };
+
+            // If this block is playing, it's the one we want. Return immediately.
+            if (currentBlockIsPlaying) {
+              return meta;
+            }
+
+            // Otherwise, store as candidate (likely paused/last played)
+            // Only overwrite if we don't have a candidate yet, or maybe overwrite to get the "latest" parsed?
+            // Dumpsys usually lists "Sessions Stack" with most recent/active on top or bottom?
+            // The example showed YouTube (Playing) then Spotify (Paused).
+            // We should typically prefer the first one found if we iterate from top,
+            // BUT we want the *playing* one preferentially.
+            candidateMetadata ??= meta;
+          }
+        }
+      }
+
+      return candidateMetadata ?? {};
+    } catch (e) {
+      return {};
     }
   }
 }
