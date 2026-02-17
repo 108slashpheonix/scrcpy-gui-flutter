@@ -216,6 +216,11 @@ class ScrcpyService {
       args.addAll(['--window-title', windowTitle]);
     }
 
+    final startApp = config['startApp'] as String?;
+    if (startApp != null && startApp.isNotEmpty) {
+      args.addAll(['--start-app=$startApp']);
+    }
+
     final sessionMode = config['sessionMode'] as String? ?? 'mirror';
 
     final otgEnabled = config['otgEnabled'] as bool? ?? false;
@@ -286,11 +291,12 @@ class ScrcpyService {
         if (config['cameraHighSpeed'] == true) args.add('--camera-high-speed');
         final fps = config['cameraFps']?.toString() ?? '30';
         if (fps != '0') args.add('--camera-fps=$fps');
-      } else if (sessionMode == 'desktop') {
+      } else if (sessionMode == 'desktop' || config['newDisplay'] == true) {
         final w = config['vdWidth']?.toString() ?? '1920';
         final h = config['vdHeight']?.toString() ?? '1080';
         final dpi = config['vdDpi']?.toString() ?? '420';
         args.add('--new-display=${w}x$h/$dpi');
+        // Video buffer helps with smoothing on virtual displays
         args.add('--video-buffer=100');
         final fps = config['fps']?.toString() ?? '60';
         args.addAll(['--max-fps', fps]);
@@ -314,6 +320,9 @@ class ScrcpyService {
     }
 
     try {
+      final cmd = '${_getScrcpyPath()} ${args.join(' ')}';
+      onLog?.call('Starting scrcpy: $cmd');
+
       final proc = await Process.start(_getScrcpyPath(), args);
       _processes[deviceId] = proc;
       onStatusChange?.call(deviceId, true);

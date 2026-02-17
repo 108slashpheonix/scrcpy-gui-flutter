@@ -24,7 +24,7 @@ class AppManagementView extends StatelessWidget {
                   Icon(Icons.apps, size: 48, color: theme.textMuted),
                   const SizedBox(height: 12),
                   Text(
-                    'App Management',
+                    'Apps',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -33,7 +33,7 @@ class AppManagementView extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Install, Uninstall, and Manage Apps',
+                    'Launch, Install, and Manage Apps',
                     style: TextStyle(fontSize: 12, color: theme.textMuted),
                   ),
                 ],
@@ -157,6 +157,7 @@ class _AppListState extends State<_AppList> {
   final TextEditingController _searchCtrl = TextEditingController();
   List<Map<String, String>> _filteredApps = [];
   String _filterType = 'all'; // all, user, system
+  bool _isGridView = false;
 
   @override
   void initState() {
@@ -294,7 +295,7 @@ class _AppListState extends State<_AppList> {
           ],
         ),
         const SizedBox(height: 8),
-        // Filter tabs
+        // Filter tabs & Toggle
         Row(
           children: [
             _FilterTab(
@@ -327,6 +328,16 @@ class _AppListState extends State<_AppList> {
               theme: theme,
             ),
             const Spacer(),
+            // Toggle View
+            _IconBtn(
+              icon: _isGridView ? Icons.list : Icons.grid_view,
+              theme: theme,
+              tooltip: _isGridView
+                  ? 'Switch to List View'
+                  : 'Switch to Grid View',
+              onTap: () => setState(() => _isGridView = !_isGridView),
+            ),
+            const SizedBox(width: 8),
             Text(
               '${_filteredApps.length} Apps',
               style: TextStyle(
@@ -339,7 +350,7 @@ class _AppListState extends State<_AppList> {
         ),
         const SizedBox(height: 8),
 
-        // List
+        // List or Grid
         Expanded(
           child: _loading
               ? Center(
@@ -353,92 +364,172 @@ class _AppListState extends State<_AppList> {
                       color: theme.accentSoft.withValues(alpha: 0.1),
                     ),
                   ),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(4),
-                    itemCount: _filteredApps.length,
-                    itemBuilder: (context, index) {
-                      final app = _filteredApps[index];
-                      final isUser = app['type'] == 'user';
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: GestureDetector(
-                          onSecondaryTapUp: (details) {
-                            _showContextMenu(
-                              context,
-                              details.globalPosition,
-                              app,
-                            );
-                          },
-                          child: ListTile(
-                            dense: true,
-                            visualDensity: VisualDensity.compact,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 0,
-                            ),
-                            leading: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: isUser
-                                    ? Colors.green.withValues(alpha: 0.1)
-                                    : Colors.grey.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                  child: _isGridView
+                      ? GridView.builder(
+                          padding: const EdgeInsets.all(10),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 120,
+                                childAspectRatio: 0.8,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
                               ),
-                              child: Icon(
-                                Icons.android,
-                                size: 18,
-                                color: isUser ? Colors.green : Colors.grey,
+                          itemCount: _filteredApps.length,
+                          itemBuilder: (context, index) {
+                            final app = _filteredApps[index];
+                            final isUser = app['type'] == 'user';
+                            return GestureDetector(
+                              onDoubleTap: () => _launchOnDesktop(app),
+                              onSecondaryTapUp: (details) => _showContextMenu(
+                                context,
+                                details.globalPosition,
+                                app,
                               ),
-                            ),
-                            title: Text(
-                              app['name'] ?? 'Unknown',
-                              style: TextStyle(
-                                color: theme.textMain,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text(
-                              app['package'] ?? '',
-                              style: TextStyle(
-                                color: theme.textMuted,
-                                fontSize: 10,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isUser
-                                    ? theme.accentPrimary.withValues(alpha: 0.1)
-                                    : Colors.white.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                (app['type'] ?? 'system').toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                  color: isUser
-                                      ? theme.accentPrimary
-                                      : theme.textMuted,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: theme.surfaceColor,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: theme.accentSoft.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.android,
+                                      size: 32,
+                                      color: isUser
+                                          ? Colors.green
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      app['name'] ?? 'Unknown',
+                                      style: TextStyle(
+                                        color: theme.textMain,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      app['package'] ?? '',
+                                      style: TextStyle(
+                                        color: theme.textMuted,
+                                        fontSize: 9,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(4),
+                          itemCount: _filteredApps.length,
+                          itemBuilder: (context, index) {
+                            final app = _filteredApps[index];
+                            final isUser = app['type'] == 'user';
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: GestureDetector(
+                                onDoubleTap: () {
+                                  _launchOnDesktop(app);
+                                },
+                                onSecondaryTapUp: (details) {
+                                  _showContextMenu(
+                                    context,
+                                    details.globalPosition,
+                                    app,
+                                  );
+                                },
+                                child: ListTile(
+                                  dense: true,
+                                  visualDensity: VisualDensity.compact,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 0,
+                                  ),
+                                  leading: Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: isUser
+                                          ? Colors.green.withValues(alpha: 0.1)
+                                          : Colors.grey.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Icon(
+                                      Icons.android,
+                                      size: 18,
+                                      color: isUser
+                                          ? Colors.green
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  title: Text(
+                                    app['name'] ?? 'Unknown',
+                                    style: TextStyle(
+                                      color: theme.textMain,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  subtitle: Text(
+                                    app['package'] ?? '',
+                                    style: TextStyle(
+                                      color: theme.textMuted,
+                                      fontSize: 10,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isUser
+                                          ? theme.accentPrimary.withValues(
+                                              alpha: 0.1,
+                                            )
+                                          : Colors.white.withValues(
+                                              alpha: 0.05,
+                                            ),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      (app['type'] ?? 'system').toUpperCase(),
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: isUser
+                                            ? theme.accentPrimary
+                                            : theme.textMuted,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
         ),
       ],
@@ -450,6 +541,7 @@ class _AppListState extends State<_AppList> {
     Offset position,
     Map<String, String> app,
   ) {
+    final theme = widget.theme;
     showMenu(
       context: context,
       position: RelativeRect.fromLTRB(
@@ -460,6 +552,46 @@ class _AppListState extends State<_AppList> {
       ),
       color: const Color(0xFF1E1E1E),
       items: [
+        PopupMenuItem(
+          height: 32,
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              _launchOnDesktop(app);
+            });
+          },
+          child: Row(
+            children: [
+              Icon(
+                Icons.desktop_mac_rounded,
+                size: 16,
+                color: theme.accentPrimary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Launch (Mirror)',
+                style: TextStyle(color: theme.accentPrimary, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          height: 32,
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              _startOnDevice(app);
+            });
+          },
+          child: Row(
+            children: [
+              Icon(Icons.play_arrow_rounded, size: 16, color: theme.textMuted),
+              const SizedBox(width: 8),
+              Text(
+                'Start on Phone',
+                style: TextStyle(color: theme.textMuted, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
         PopupMenuItem(
           height: 32,
           onTap: () {
@@ -575,6 +707,54 @@ class _AppListState extends State<_AppList> {
         ),
       );
       _loadApps(); // Refresh list
+    }
+  }
+
+  Future<void> _launchOnDesktop(Map<String, String> app) async {
+    final appState = context.read<AppState>();
+    final packageName = app['package'];
+    final appName = app['name'] ?? 'Unknown App';
+
+    if (packageName == null) return;
+
+    // Launch scrcpy session for this app
+    await appState.launchApp(packageName, appName);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Launching $appName on Desktop...'),
+          backgroundColor: Colors.blueAccent,
+          width: 300,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
+  }
+
+  Future<void> _startOnDevice(Map<String, String> app) async {
+    final appState = context.read<AppState>();
+    final deviceId = appState.selectedDevice;
+    final packageName = app['package'];
+    if (deviceId == null || packageName == null) return;
+
+    final success = await appState.adbService.launchApp(deviceId, packageName);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success
+                ? 'Started ${app['name']} upon Phone'
+                : 'Failed to start ${app['name']}',
+          ),
+          backgroundColor: success ? Colors.green : Colors.red,
+          width: 300,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 1),
+        ),
+      );
     }
   }
 }

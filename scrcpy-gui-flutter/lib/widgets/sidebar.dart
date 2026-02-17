@@ -58,6 +58,13 @@ class _SidebarState extends State<Sidebar> {
               const SizedBox(height: 16),
               if (isWidening) _buildSectionHeader(theme, 'DEVICE'),
               _NavItem(
+                icon: Icons.apps_rounded,
+                label: 'Apps',
+                selected: widget.currentIndex == 1,
+                onTap: () => widget.onIndexChanged(1),
+                isCollapsed: !isWidening,
+              ),
+              _NavItem(
                 icon: Icons.phonelink_setup_rounded,
                 label: 'Media Control',
                 selected: widget.currentIndex == 7,
@@ -81,13 +88,6 @@ class _SidebarState extends State<Sidebar> {
 
               const SizedBox(height: 16),
               if (isWidening) _buildSectionHeader(theme, 'MANAGEMENT'),
-              _NavItem(
-                icon: Icons.apps_rounded,
-                label: 'App Manager',
-                selected: widget.currentIndex == 1,
-                onTap: () => widget.onIndexChanged(1),
-                isCollapsed: !isWidening,
-              ),
               _NavItem(
                 icon: Icons.folder_rounded,
                 label: 'Files',
